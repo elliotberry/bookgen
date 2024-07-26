@@ -1,4 +1,4 @@
-const askOpenAI = async function (prompt, role, modelChoice = 'gpt-3.5-turbo', tokens=5000, temp=0.85) {
+const askOpenAI = async (prompt, role, modelChoice = 'gpt-3.5-turbo', tokens=5000, temp=0.85) => {
     let now = new Date();
     // let model = 'gpt-3.5-turbo' // //gpt-4-0314
     let roleContent = "You are an ChatGPT-powered chat bot."
@@ -11,12 +11,12 @@ const askOpenAI = async function (prompt, role, modelChoice = 'gpt-3.5-turbo', t
         roleContent = "You are a professional fiction writer who is a best-selling author. You use all of the rhetorical devices you know to write a compelling book."
     }
 
-    return new Promise(function(resolve, reject) {
+    return new Promise((resolve, reject) => {
         fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             'headers': {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.API_KEY}`,
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
             },
             'body': JSON.stringify({
                 'model': modelChoice,
@@ -46,7 +46,7 @@ const askOpenAI = async function (prompt, role, modelChoice = 'gpt-3.5-turbo', t
             // console.log(data);
             try {
                 let elapsed = new Date() - now;
-                console.log('\nOpenAI response time: ' + elapsed + 'ms\n')
+                console.log(`\nOpenAI response time: ${elapsed}ms\n`)
                 resolve (data)
                 return data;
             } catch(e) {
@@ -58,4 +58,4 @@ const askOpenAI = async function (prompt, role, modelChoice = 'gpt-3.5-turbo', t
     });
 }
 
-exports.askOpenAI = askOpenAI;
+export {askOpenAI};
