@@ -1,3 +1,4 @@
+import readline from 'readline';
 function getGenre() {
   let genresList = ['Action', 'Adventure', 'Alternative History', 'Apocalyptic', 'Children\'s', 'Comedy', 
     'Crime', 'Cyberpunk', 'Drama', 'Dystopian', 'Elizabethan', 'Existentialist', 'Fantasy', 'Gothic', 
@@ -9,7 +10,7 @@ function getGenre() {
   let randomGenre = genresList[Math.floor(Math.random() * genresList.length)];
   readline.cursorTo(process.stdout,1,1)
   process.stdout.write(`\u001B[35mGenre is: ${randomGenre}`);
-  return randomGenre;
+  return "Spooky Young Adult Poems to Tell While Knitting";
 }
 
 export default getGenre;

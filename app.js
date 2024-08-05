@@ -1,10 +1,13 @@
 import 'dotenv/config'
-import fs from 'fs';
+import fs from 'node:fs';
 import readline from 'readline';
-
+import overview from './overview.js';
 import appendToFile from './append.js';
-import {askOpenAI} from "./askOpenAI";
+import {askOpenAI} from "./ask-open-AI.js";
 import getGenre from './get-genre.js';
+import models from './models.js';
+import pageGenerator from './page-generator.js';
+import State from './state.js';
 
 //GLOBALS
 const modelChoice = process.argv[2] || 'gpt4';
@@ -12,16 +15,6 @@ const chapterLength = process.argv[4] || 10;
 const desiredPages = process.argv[3] || 200;
 const padAmount = process.argv[5] || 500;
 
-const models = {
-  'gpt4': {
-    name: 'gpt-4-0314',
-    tokenLimit: 8000,
-  },
-  'gpt35': {
-    name: 'gpt-3.5-turbo',
-    tokenLimit: 4097,
-  } 
-}
 
 
 function countWords(string_) {
@@ -42,70 +35,12 @@ async function outlineGenerator(state){
   process.stdout.write(`\u001B[36mHere is the raw outline:\n`);
   readline.cursorTo(process.stdout,4,6);
   process.stdout.write(`\u001B[36m${outline}`);
-  return outline;
+  state.update('rawOutline', outline);
 }
 
-async function main() {
-  let state = {
-    chapterByChapterSummaryString: '',
-    chapterSummaryArray: [],
-    chapters: desiredPages / chapterLength,
-    desiredPages,
-    filename: '',
-    fullText: [],
-    mainCharacters: [],
-    minorCharacters: [],
-    pageSummaries: [],
-    plotGenre: '',
-    plotOutline: '',
-    plotSettings: [],
-    rawOutline: '',
-    writingAdjectives: '',
-    writingStyle: '',
-  }
-  state.plotGenre = getGenre();
-  state.filename = `${state.plotGenre}${modelChoice}${Math.round(Math.random()*100)}.txt`;
-  state.rawOutline = await outlineGenerator(state);
-  state = await statePopulator(state);
-  state.chapterByChapterSummaryString = await plotSummaryByChapter(state);
-  state.chapterSummaryArray = await chapterSummaryArray(state);
-  state.pageSummaries = await pageGenerator(state);
-}
 
-async function statePopulator(state) {
-  
-  console.log('\nPopulating state from raw outline.\n')
 
-  const itemsToPopulateHashMap = {
-    'mainCharacters': 'main characters list',
-    'minorCharacters': 'minor characters list',
-    'plotOutline': 'plot',
-    'plotSettings': 'setting',
-    'writingAdjectives': 'writing adjectives list',
-    'writingStyle': 'writing style'
-  }
 
-  for (const [key, keyValue] of Object.entries(itemsToPopulateHashMap)) {
-    
-    const statePopulatorPrompt = `I'm going to give you the outline of a book. From this outline, tell me the ${keyValue}. Use close to ${models[modelChoice].tokenLimit - (500 + state.rawOutline + padAmount)} words for this page. Here is the outline: ${state.rawOutline}`;
-
-    let statePopulatorResult = await askOpenAI(statePopulatorPrompt, 'machine', models[modelChoice].name, (models[modelChoice].tokenLimit - (state.rawOutline.length + padAmount)), 0.9)
-
-    console.log(statePopulatorResult)
-    statePopulatorResult = statePopulatorResult.choices[0].message.content;
-
-    state[key] = statePopulatorResult;
-    process.stdout.write(`\n\u001B[36m here is the ${keyValue}: ${statePopulatorResult}\n`);
-  }
-  
-  process.stdout.write(`\n\u001B[36mHere is the state object:\n`)
-  const textToSave = `\n${JSON.stringify(state)}\n`;
-  fs.appendFile(state.filename, textToSave, (error) => {
-    if (error) {throw error;}
-  });
-  console.log(state);
-  return state;
-}
 
 async function plotSummaryByChapter(state) {
   console.log('\nGenerating chapter-by-chapter plot summary.\n');
@@ -119,10 +54,10 @@ async function plotSummaryByChapter(state) {
       chapterSummaryText = chapterSummaryText.choices[0].message.content; 
       chapterSummaryText = chapterSummaryText.split(/\n/).filter(({length}) => length > 5);
       process.stdout.write(`\n\u001B[34mChapter-By-Chapter Plot Summary: ${chapterSummaryText}\n`)
-      const textToSave = `\n\nChapter-By-Chapter Plot Summary: ${chapterSummaryText}\n`;
-      fs.appendFile(state.filename, textToSave, (error) => {
-        if (error) {throw error;}
-      });
+     // const textToSave = `\n\nChapter-By-Chapter Plot Summary: ${chapterSummaryText}\n`;
+     // fs.appendFile(state.filename, textToSave, (error) => {
+     //   if (error) {throw error;}
+    //  });
       return chapterSummaryText;
     }
     catch {}
@@ -150,13 +85,16 @@ async function chapterSummaryArray(state) {
         if (shortSummaryText.choices[0].message.content) {
           shortSummaryText = shortSummaryText.choices[0].message.content;
           shortSummaryText = shortSummaryText.replaceAll('\n', '');
-          state.chapterSummaryArray.push(shortSummaryText);
-          process.stdout.write(`\r\u001B[35mHere is the chapter summary: \n${state.chapterSummaryArray[index]}\n`);
+         // state.chapterSummaryArray.push(shortSummaryText);
+         let newArray = [...state.chapterSummaryArray, shortSummaryText];
+        state.update('chapterSummaryArray', newArray);
+        
+         process.stdout.write(`\r\u001B[35mHere is the chapter summary: \n${state.chapterSummaryArray[index]}\n`);
           condition = false;
-          const textToSave = `\nChapter ${index} Summary${state.chapterSummaryArray[index]}\n`;
-          fs.appendFile(state.filename, textToSave, (error) => {
-            if (error) {throw error;}
-          });
+       //   const textToSave = `\nChapter ${index} Summary${state.chapterSummaryArray[index]}\n`;
+         // fs.appendFile(state.filename, textToSave, (error) => {
+          //  if (error) {throw error;}
+         // });
         } else {
           shortSummaryText = 'error';
         }        
@@ -165,114 +103,21 @@ async function chapterSummaryArray(state) {
       }
     }
   }
+  state.update('chapterSummaryArray', state.chapterSummaryArray);
   return state;
 }
 
-const generatePageSummary = async (page, modelChoice) => {
-  while (true) {
-    try {
-      const pageSummaryText = await askOpenAI(`Here is a full page of text. Please summarize it in a few sentences. Text to summarize: ${page}`, 'machine', models[modelChoice].name, (models[modelChoice].tokenLimit - (page.length + padAmount)), 0.5);
+async function main() {
+  var state = new State({modelChoice, chapterLength, desiredPages, padAmount});
+  var plotGenre = getGenre();
+  state.update('plotGenre', plotGenre);
+  //state.filename = `${state.plotGenre}${modelChoice}${Math.round(Math.random()*100)}.txt`;
+  await outlineGenerator(state);
 
-      if (pageSummaryText.choices && pageSummaryText.choices[0]) {
-        return pageSummaryText.choices[0].message.content;
-      }
-      console.log('Error summarizing:', pageSummaryText)
-    } catch (error) {
-      console.log(error)
-    }
-  }
-};
-
-
-
-async function pageGenerator(state) {
-
-  console.log('\nEntering Page Generation module.\n');
-
-  for (let index=0; index<state.chapters; index++){
-    for (let index_=0; index_<20; index_++) {
-
-      // let pageToWrite = i*20 + j+1;
-      amendment = createPageQueryAmendment(state, index, index_);
-
-      console.log('\nGenerating final full text for chapter', index+1, 'page', index_+1, '\n');
-
-      let pageGenText = ''
-      
-      while (true) {
-        try {
-          pageGenText = await askOpenAI(`You are an author writing page ${index_+1} in chapter ${index+1} of a ${state.chapters}-chapter ${state.plotGenre} novel. \
-          The plot summary for this chapter is ${state.chapterSummaryArray[index]}. ${amendment}. As you continue writing the next page, be sure to develop the \
-          characters' background thoroughly, include dialogue and detailed literary descriptions of the scenery, and develop the plot. Do not mention page \
-          or chapter numbers! Do not jump to the end of the plot and make sure there is plot continuity. Carefully read the summaries of the prior pages \ 
-          before writing new plot. Make sure you fill an entire page of writing.`, 
-          'writer', models[modelChoice].name, (models[modelChoice].tokenLimit - (state.chapterSummaryArray[index] + amendment)), 0.9)
-          
-          if (!pageGenText.choices) {
-            console.log('error in pageGenText')
-            console.log(pageGenText)
-            pageGenText = 'error'
-          }
-
-          if (!pageGenText.choices[0]) {pageGenText = 'error'}
-          if (!pageGenText.choices[0].message) {pageGenText = 'error'}
-
-          if (pageGenText.choices[0].message.content) {
-            pageGenText = pageGenText.choices[0].message.content;
-            pageGenText = pageGenText.replaceAll('\n', '');
-            state.fullText.push((`${pageGenText}\n`));
-            
-            process.stdout.write(`\u001B[36m\n\n\nChapter ${index+1}\n\nPage ${index_+1}\n\n ${pageGenText}\n\n`);
-
-            const header = `\n\nChapter ${index + 1}, Page ${index_ + 1}\n\n`;
-            await appendToFile(state.filename, header + pageGenText);
-
-            const pageSummary = await generatePageSummary(pageGenText, modelChoice)
-            state.pageSummaries.push(pageSummary);
-          } else {
-            pageGenText = 'error'
-          }
-        } catch (error) {
-          console.log(error);
-        }
-      }
-    }
-  }
+  //state = await statePopulator(state);
+  await overview(state);
+  await plotSummaryByChapter(state);
+  await chapterSummaryArray(state);
+  await pageGenerator(state);
 }
-
-function createPageQueryAmendment({fullText, sentenceSummaries}, index, index_) {
-
-  let amendment = "";
-
-  if (index_ == 0) {
-    return "This is the first page of the chapter.";
-  }
-
-  if (index_ == 1 && modelChoice == 'gpt4') {
-    return `Page 1 of this chapter reads as follows: \n${fullText[(index*20 + index_-1)]}\n`;
-  };
-
-  if (index_ == 2 && modelChoice == 'gpt4') {
-    return `Pages ${index_-1} reads as follows: \n${fullText[(index*20 + index_-2)]}\n Page ${index_} reads as follows: ${fullText[(index*20 + index_-1)]}\n`;
-  }
-
-  //join the state.sentenceSummaries of all prior pages in the chapter so far
-  let priorPages = '';
-
-  for (let k=0; k<index_; k++) {
-    if (k == 0) {priorPages = ''; return;};
-    priorPages += `\nChapter ${index+1}, Page ${k+1}: ${sentenceSummaries[(index*20 + k)]}\n`;
-  }
-
-  if (index_ > 2 && modelChoice == 'gpt4') {
-    amendment = `Here are the page summaries of the chapter thus far: ${priorPages}. The full text of pages ${index_-2},${index_-1} and ${index_} read as follows: Page ${index_-2}: ${fullText[(index*20 + index_-3)]} Page ${index_-1}: ${fullText[(index*20 + index_-2)]} Page ${index_}: ${fullText[(index*20 + index_-1)]}`;
-  }
-
-  if (index_ > 0 && modelChoice == 'gpt35') {
-    return `Here are the page summaries of the chapter thus far: ${priorPages}. Here is the full text of page ${index_}: ${fullText[(index*20 + index_-1)]}`;
-  }
-
-  return amendment;
-}
-
 main();
