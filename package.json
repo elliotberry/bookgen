@@ -20,5 +20,8 @@
     "prettier": "^3.2.5",
     "release-it": "^17.3.0"
   },
-  "type": "module"
+  "type": "module",
+  "volta": {
+    "node": "21.7.3"
+  }
 }

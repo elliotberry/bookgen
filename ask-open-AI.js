@@ -1,4 +1,4 @@
-const askOpenAI = async (prompt, role, modelChoice = 'gpt-3.5-turbo', tokens=5000, temp=0.85) => {
+const askOpenRouter = async (prompt, role, modelChoice = 'gpt-3.5-turbo', tokens=5000, temp=0.85) => {
     let now = new Date();
     // let model = 'gpt-3.5-turbo' // //gpt-4-0314
     let roleContent = "You are an ChatGPT-powered chat bot."
@@ -58,4 +58,4 @@ const askOpenAI = async (prompt, role, modelChoice = 'gpt-3.5-turbo', tokens=500
     });
 }
 
-export {askOpenAI};
+export default askOpenRouter

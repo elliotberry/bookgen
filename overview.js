@@ -1,4 +1,4 @@
-import askOpenAI from './ask-open-AI.js';
+import askOpenRouter from './ask-open-AI.js';
 import models from './models.js';
 const itemsToPopulateHashMap = {
     'mainCharacters': 'main characters list',
@@ -16,7 +16,7 @@ const overviewItems = async (state) => {
       
       const statePopulatorPrompt = `I'm going to give you the outline of a book. From this outline, tell me the ${keyValue}. Use close to ${models[modelChoice].tokenLimit - (500 + state.rawOutline + padAmount)} words for this page. Here is the outline: ${state.rawOutline}`;
   
-      let statePopulatorResult = await askOpenAI(statePopulatorPrompt, 'machine', models[modelChoice].name, (models[modelChoice].tokenLimit - (state.rawOutline.length + padAmount)), 0.9)
+      let statePopulatorResult = await askOpenRouter(statePopulatorPrompt, 'machine', models[modelChoice].name, (models[modelChoice].tokenLimit - (state.rawOutline.length + padAmount)), 0.9)
   
       console.log(statePopulatorResult)
       statePopulatorResult = statePopulatorResult.choices[0].message.content;

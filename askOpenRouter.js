@@ -1,12 +1,10 @@
 import dotenv from 'dotenv';
-import openai from "openai";
+
 
 dotenv.config();
 
-openai.apiKey = process.env.OPENAI_API_KEY;
 
-
-async function askOpenAI(prompt, role = "user", model = "meta-llama/Llama-2-70b-chat-hf", tokens = 5000, temperature = 0.85) {
+async function askOpenRouter(prompt, role = "user", model = "meta-llama/Llama-2-70b-chat-hf", tokens = 5000, temperature = 0.85) {
     const startTime = Date.now();
     const roles = {
         "assistant": "You are a helpful and knowledgeable assistant.",
@@ -26,7 +24,7 @@ async function askOpenAI(prompt, role = "user", model = "meta-llama/Llama-2-70b-
     };
 
     try {
-        const response = await fetch("https://api.openrouter.ai/chat/completions", {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             body: JSON.stringify(requestBody),
             headers: {
                 "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
@@ -34,7 +32,10 @@ async function askOpenAI(prompt, role = "user", model = "meta-llama/Llama-2-70b-
             },
             method: "POST"
         });
-
+        if (!response.ok) {
+            console.error("OpenRouter API error:", response.statusText);
+            return { error: response.statusText, text: 'error' };
+        }
         const data = await response.json();
         const elapsed = Date.now() - startTime;
         console.log(`\nOpenRouter + Llama 2 response time: ${elapsed}ms\n`);
@@ -52,4 +53,4 @@ async function askOpenAI(prompt, role = "user", model = "meta-llama/Llama-2-70b-
     }
 }
 
-export default { askOpenAI };
+export default askOpenRouter;
