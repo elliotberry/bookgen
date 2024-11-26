@@ -9,12 +9,14 @@ import createPageQueryAmendment from './create-page-query-amendment.js';
 async function pageGenerator(model, {chapterLength, chapterSummaryArray, chapters, modelChoice, plotGenre, filename}) {
   console.log('\nEntering Page Generation module.\n');
 
-  let chapterIterator = Array.from({length: chapterLength}, (_, i) => i);
-  for await (let index of chapterIterator) {
-    let pageIterator = Array.from({length: 20}, (_, i) => i);
-    for await (let index_ of pageIterator) {
+  let chapterNumber = 0;
+  for await (let chapter of chapters) {
+    chapterNumber++;
+    let pageNumber = 0;
+    for await (let page of chapter) {
+      pageNumber++;
       // let pageToWrite = i*20 + j+1;
-      let amendment = createPageQueryAmendment(state, index, index_);
+      let amendment = createPageQueryAmendment(state, chapterNumber, pageNumber);
 
       console.log('\nGenerating final full text for chapter', index + 1, 'page', index_ + 1, '\n');
 

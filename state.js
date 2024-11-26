@@ -5,10 +5,9 @@ import getGenre from './get-genre.js';
 import overview from './overview.js';
 import chapterSummaryArray from './chapter-summary-array.js';
 import plotSummaryByChapter from './plot-summary-by-chapter.js';
-import readline from 'readline';
+
 import overview from './overview.js';
-import appendToFile from './append.js';
-import askOpenRouter from './ask-open-AI.js';
+
 import askOpenRouter from './askOpenRouter.js';
 import getGenre from './get-genre.js';
 import models from './models.js';
@@ -24,6 +23,11 @@ const defaultOpts = {
 
 class State {
   constructor(opts) {
+    
+    init(opts);
+  }
+  async init(opts) {
+    this.filename = `backup.json`; // Use a timestamp for the filename
     this.functions = [
       {name: 'genre', fn: getGenre},
       {name: 'overview', fn: overview},
@@ -35,7 +39,7 @@ class State {
     this.defaultData = {
       chapterByChapterSummaryString: '',
       chapterSummaryArray: [],
-      chaptersLength: this.opts.desiredPages / this.opts.chapterLength,
+      chaptersLength: 10,
       chapters: Array.from({length: this.data.chaptersLength}, (_, i) => i + 1),
       fullText: [],
       mainCharacters: [],
@@ -47,12 +51,8 @@ class State {
       rawOutline: '',
       writingAdjectives: '',
       writingStyle: '',
+      overviewItems: {mainCharacters: 'main characters list', minorCharacters: 'minor characters list', plotOutline: 'plot', plotSettings: 'setting', writingAdjectives: 'writing adjectives list', writingStyle: 'writing style'},
     };
-    init(opts);
-  }
-  async init(opts) {
-    this.filename = `backup.json`; // Use a timestamp for the filename
-
     let backupData = await this.loadBackup();
     if (backupData) {
       this.data = backupData.data;
@@ -64,6 +64,9 @@ class State {
       this.opts = Object.assign({}, defaultOpts, opts);
     }
     this.model = models[this.opts.modelChoice];
+    this.data.chaptersLength = this.opts.desiredPages / this.opts.chapterLength;
+    this.data.chapters = Array.from({length: this.data.chaptersLength}, (_, i) => new Array(this.opts.chapterLength).fill(''));  
+
     return this;
   }
   async run() {
@@ -71,10 +74,19 @@ class State {
 
     for (const {name, fn} of functionsToRun) {
       console.log(`Running function: ${name}`);
-      let resp = await fn(this.model, this.data);
-      this.data = Object.assign(this.data, resp);
-      this.updateFileCache();
+      let resp = await fn(this.model, this.data, this.opts, this.pushToData.bind(this));
+
+      if (this.resp) {
+        this.data = Object.assign(this.data, resp);
+
+        this.updateFileCache();
+      }
     }
+  }
+  async pushToData(key, value) {
+    let existing = this.data[key] || [];
+    this.data[key].push(value);
+    await this.updateFileCache();
   }
   async loadBackup() {
     try {

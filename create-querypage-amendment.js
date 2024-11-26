@@ -1,7 +1,7 @@
-async function createPageQueryAmendment({modelChoice, fullText, sentenceSummaries}, index, index_) {
+async function createPageQueryAmendment({modelChoice, fullText, sentenceSummaries}, chapterNumber, pageNumber) {
   let amendment = '';
 
-  if (index_ == 0) {
+  if (pageNumber == 0) {
     return 'This is the first page of the chapter.';
   }
 

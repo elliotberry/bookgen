@@ -6,11 +6,11 @@ function getGenre() {
     'Paranormal', 'Post-Apocalyptic', 'Romance', 'Postmodern', 'Science Fiction', 'Sports', 
     'Star Trek Fan Fiction', 'Steampunk', 'Superhero', 'Supernatural', 'Teenage', 'Thriller',
     'Tragedy', 'Utopian', 'Victorian', 'Western', 'Young Adult'];
-  console.clear();
+
   let randomGenre = genresList[Math.floor(Math.random() * genresList.length)];
-  readline.cursorTo(process.stdout,1,1)
-  process.stdout.write(`\u001B[35mGenre is: ${randomGenre}`);
-  return "Spooky Young Adult Poems to Tell While Knitting";
+
+  console.log(`Genre is: ${randomGenre}`);
+  return {genre: "Spooky Young Adult Poems to Tell While Knitting"};
 }
 
 export default getGenre;
