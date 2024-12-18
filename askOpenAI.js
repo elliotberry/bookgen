@@ -16,7 +16,7 @@ const askOpenAI = async function (prompt, role, modelChoice = 'gpt-3.5-turbo', t
             method: 'POST',
             'headers': {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.API_KEY}`,
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
             },
             'body': JSON.stringify({
                 'model': modelChoice,
