@@ -1,17 +1,17 @@
 import 'dotenv/config';
-
+import createProxy from './create-proxy.js';
 import fs from 'fs';
 import {askOpenRouter} from './ask-open-router.js';
 import chalk from 'chalk';
 
 //GLOBALS
-let selectedModel = process.argv[2] || 'anthropic/claude-3.5-sonnet:beta';
+let selectedModel = process.argv[2] || 'mistralai/ministral-8b';
 let chapterSize = process.argv[4] || 3;
 let totalChapters = process.argv[3] || 2;
 let totalPages = chapterSize * totalChapters;
 let padding = process.argv[5] || 500;
 
-var bookGenre = 'Historical Fiction';
+var bookGenre = 'Train-Themed Lesbian Hardcore Erotica';
 let modelConfigurations = {
   gpt35: {
     name: 'gpt-3.5-turbo',
@@ -37,6 +37,10 @@ let modelConfigurations = {
     name: 'anthropic/claude-3.5-sonnet:beta',
     tokenLimit: 32000,
   },
+  "mistralai/ministral-8b": {
+    name: "mistralai/ministral-8b",
+    tokenLimit: 32000,
+  }
 };
 
 const formatFileName = str => str.split(' ').join('_').split('/').join('-').toLowerCase();
@@ -80,9 +84,11 @@ async function main() {
     fullText: [],
     pageSummaries: [],
   };
+  let baseFilename = formatFileName(`${state.bookGenre}${selectedModel}${Math.round(Math.random() * 100)}`);
+  state = createProxy(state, `state-${baseFilename}.json`);
   state.bookGenre = bookGenre;
-  state.filename = formatFileName(`${state.bookGenre}${selectedModel}${Math.round(Math.random() * 100)}.txt`);
-  state.finalFilename = formatFileName(`${state.bookGenre}${selectedModel}${Math.round(Math.random() * 100)}.txt-1`);
+  state.filename = formatFileName(`${baseFilename}.txt`);
+  state.finalFilename = formatFileName(`${baseFilename}.txt-1`);
   fs.writeFile(state.filename, '', err => {
     if (err) {
       throw err;
@@ -99,6 +105,8 @@ async function main() {
   state.chapterSummaries = await generateChapterSummaryArray(state);
   state.pageSummaries = await generatePages(state);
 }
+
+
 
 async function populateState(state) {
   console.log('\nPopulating state from raw outline.\n');
@@ -265,9 +273,9 @@ async function generatePages(state) {
 
       console.log('Generating final full text for chapter ', i + 1, ' page ', j + 1, '\n');
 
-      let pageGenText = '';
+      let pageGenText = 'error';
 
-      while (pageGenText !== 'error') {
+      while (pageGenText === 'error') {
         try {
           pageGenText = await askOpenRouter(
             `You are an author writing page ${j + 1} in chapter ${i + 1} of a ${state.chapters}-chapter ${state.bookGenre} novel. \
