@@ -1,6 +1,7 @@
-var totalUsage = 0;
+import chalk from 'chalk';
+import 'dotenv/config';
 
-const askOpenRouter = async (prompt, role, modelChoice = 'gpt-3.5-turbo', tokens = 5000, temp = 0.85, maxRetries = 3) => {
+const askOpenRouter = async (prompt, role, modelChoice = 'mistralai/ministral-8b', tokens = 5000, temp = 0.85, maxRetries = 3) => {
   const now = new Date();
   let roleContent = 'You are a ChatGPT-powered chatbot.';
 
@@ -16,7 +17,7 @@ const askOpenRouter = async (prompt, role, modelChoice = 'gpt-3.5-turbo', tokens
   let attempts = 0;
   while (attempts < maxRetries) {
     try {
-      const response = await fetch('https://gateway.ai.cloudflare.com/v1/e8308a9ca45585112db0d6f88a2cf0c9/penus/openrouter/v1/chat/completions', {
+      const response = await fetch(process.env.API_ENDPOINT, {
         method: 'POST',
         headers: {
           'cf-aig-metadata': JSON.stringify({
@@ -39,7 +40,6 @@ const askOpenRouter = async (prompt, role, modelChoice = 'gpt-3.5-turbo', tokens
 
       const data = await response.json();
       const elapsed = new Date() - now;
-      console.log(`OpenRouter response time: ${elapsed}ms.`);
 
       if (response.ok) {
         return data.choices[0].message.content;
@@ -49,10 +49,10 @@ const askOpenRouter = async (prompt, role, modelChoice = 'gpt-3.5-turbo', tokens
       }
     } catch (error) {
       attempts += 1;
-      console.error(`Attempt ${attempts} failed:`, error);
+      console.error(chalk.red(`Attempt ${attempts} failed:`, error));
 
       if (attempts >= maxRetries) {
-        console.error('Max retry attempts reached. Failing.');
+        console.error(chalk.red('Max retry attempts reached. Failing.'));
         throw error;
       }
 
