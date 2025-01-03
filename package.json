@@ -1,5 +1,9 @@
 {
+  "name": "bookjen",
+  "version": "1.0.0",
+  "type": "module",
   "dependencies": {
+<<<<<<< HEAD
     "dotenv": "^16.4.5",
     "openai": "^3.1.0"
   },
@@ -22,5 +26,10 @@
   "type": "module",
   "volta": {
     "node": "21.7.3"
+=======
+    "chalk": "^5.4.0",
+    "dotenv": "^16.0.3",
+    "elliotisms": "^0.0.51"
+>>>>>>> new-direction
   }
 }
