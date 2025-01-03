@@ -18,8 +18,7 @@ const models = {
   },
   "google/gemini-flash-8b-1.5-exp": {
     name: "google/gemini-flash-8b-1.5-exp",
-    tokenLimit: 10000,
-    fn: askOpenRouter
+    tokenLimit: 10000
   },
 }
 
