@@ -1,54 +1,3 @@
-<<<<<<< HEAD
-import 'dotenv/config'
-import fs from 'node:fs';
-import readline from 'readline';
-import overview from './overview.js';
-import appendToFile from './append.js';
-import askOpenRouter from "./ask-open-AI.js";
-import askOpenRouter from './askOpenRouter.js';
-import getGenre from './get-genre.js';
-import models from './models.js';
-import pageGenerator from './page-generator.js';
-import State from './state.js';
-import chapterSummaryArray from './chapter-summary-array.js';
-import plotSummaryByChapter from './plot-summary-by-chapter.js';
-
-function countWords(string_) {
-  return string_.trim().split(/\s+/).length;
-}
-
-
-
-
-
-
-
-
-async function main() {
-
-  var state = new State();
-  
-  /*
-  var plotGenrer = getGenre();
-  state.update('plotGenre', plotGenrer);
-
-  const {desiredPages, plotGenre, modelChoice, padAmount} = state.opts;
-
-  await outlineGenerator({desiredPages, plotGenre, modelChoice, padAmount}, state);
-console.log("created outline");
- // state = await statePopulator(state);
- 
-  await overview(state);
-  console.log("created overview");
-  await plotSummaryByChapter(state);
-  console.log("created plot summary");
-  await chapterSummaryArray(state);
-  console.log("created chapter summary");
-  await pageGenerator(state);
-  console.log("created page");*/
-}
-main();
-=======
 import fs from 'fs/promises';
 import path from 'path';
 import { askOpenRouter } from './ask-open-router.js';
@@ -58,11 +7,19 @@ import chalk from 'chalk';
 const countWords = (str) => str.split(/\s+/).length;
 
 
+const removeHeadlinesFromPage = (page) => {
+  const lines = page.split('\n')
+  let badLineStarters = ['chapter', 'page', '** chapter', '** page'];
+const filtered = lines.filter(line => !badLineStarters.some(badLineStarter => line.toLowerCase().startsWith(badLineStarter)))
+
+  return filtered.join('\n')
+}
+
 async function main() {
   const genre = process.argv[2];
   const numChapters = parseInt(process.argv[3], 10);
   const pagesPerChapter = parseInt(process.argv[4], 10);
-  const llmModel = process.argv[5] || 'mistralai/ministral-8b';
+  const llmModel = process.argv[5] || 'sao10k/l3.3-euryale-70b';
 
   console.log(chalk.green(`Generating a ${genre} book with ${numChapters} chapters, each with ${pagesPerChapter} pages, using the ${llmModel} model...`));
   if (!genre || isNaN(numChapters) || isNaN(pagesPerChapter)) {
@@ -71,7 +28,9 @@ async function main() {
   }
   await createFolderIfItDoesNotExist('./output')
   const formatFileName = str => str.split(' ').join('_').split('/').join('-').toLowerCase();
-  let filename = formatFileName(`book_progress_${genre}_${numChapters}_${pagesPerChapter}_${llmModel}`);
+  let shortGenre = genre.split(' ').join('-').toLowerCase();
+  shortGenre = shortGenre.slice(0, 10);
+  let filename = formatFileName(`${shortGenre}_${numChapters}_${pagesPerChapter}_${llmModel}`);
   const saveFileName = path.resolve(`./output/${filename}.json`);
   const outputFileName = path.resolve(`./output/${filename}.txt`);
 
@@ -118,7 +77,8 @@ async function main() {
           'writer',
           llmModel
         );
-        chapter.pages.push({ summary: pageSummary, content: pageContent });
+        const filteredPageContent = removeHeadlinesFromPage(pageContent)
+        chapter.pages.push({ summary: pageSummary, content: pageContent, filteredContent: filteredPageContent});
         await saveProgress(progress, saveFileName);
       }
     }
@@ -150,16 +110,14 @@ async function saveProgress(progress, filePath) {
 
 async function outputBook(progress, filePath) {
   const bookContent = [];
- // bookContent.push(`Genre: ${progress.genre}`);
- // bookContent.push(`Book Summary: ${progress.bookSummary}\n`);
+
 
   progress.chapters.forEach((chapter, chapterIdx) => {
-   // bookContent.push(`Chapter ${chapterIdx + 1}:`);
-  //  bookContent.push(chapter.summary);
+
 
     chapter.pages.forEach((page, pageIdx) => {
-     // bookContent.push(`Page ${pageIdx + 1}:`);
-      bookContent.push(page.content);
+   
+      bookContent.push(page.filteredPageContent);
     });
 
     bookContent.push('\n');
@@ -169,4 +127,3 @@ async function outputBook(progress, filePath) {
 }
 
 main().catch((err) => console.error(err));
->>>>>>> new-direction

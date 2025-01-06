@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import 'dotenv/config';
-
+import models from './models.js';
 const askOpenRouter = async (prompt, role, modelChoice = 'mistralai/ministral-8b', tokens = 5000, temp = 0.85, maxRetries = 3) => {
   const now = new Date();
   let roleContent = 'You are a ChatGPT-powered chatbot.';
@@ -13,6 +13,8 @@ const askOpenRouter = async (prompt, role, modelChoice = 'mistralai/ministral-8b
       roleContent = 'You are a professional fiction writer who is a best-selling author. You use all of the rhetorical devices you know to write a compelling book.';
       break;
   }
+
+  tokens = models[modelChoice].tokenLimit;
 
   let attempts = 0;
   while (attempts < maxRetries) {
