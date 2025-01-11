@@ -17,6 +17,10 @@ const models = {
     name: "sao10k/l3.3-euryale-70b",
     tokenLimit: 15000
   },
+  "amazon/nova-micro-v1": {
+    name: "amazon/nova-micro-v1",
+    tokenLimit: 100000
+  },
 }
 
 export default models;
