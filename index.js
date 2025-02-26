@@ -8,10 +8,6 @@ import {askOpenRouter} from './ask-open-router.js';
 import {loadProgress, saveProgress} from './progress.js';
 import { countWords, removeHeadlinesFromPage, formatFileName } from './string-functions.js';
 
-
-
-
-
 async function main() {
   const genre = process.argv[2];
   const numberChapters = Number.parseInt(process.argv[3], 10);
