@@ -1,17 +1,24 @@
-import chalk from 'chalk';
 import 'dotenv/config';
+import chalk from 'chalk';
+
 import models from './models.js';
-const askOpenRouter = async (prompt, role, modelChoice = 'mistralai/ministral-8b', tokens = 5000, temp = 0.85, maxRetries = 3) => {
+
+const askOpenRouter = async (prompt, role, modelChoice = 'mistralai/ministral-8b', tokens = 5000, temporary = 0.85, maxRetries = 3) => {
   const now = new Date();
-  let roleContent = 'You are a ChatGPT-powered chatbot.';
+  let roleContent = 'You are a professional writer.';
 
   switch (role) {
-    case 'machine':
+    case 'machine': {
       roleContent = "You are a computer program attempting to comply with the user's wishes.";
       break;
-    case 'writer':
+    }
+    case 'writer': {
       roleContent = 'You are a professional fiction writer who is a best-selling author. You use all of the rhetorical devices you know to write a compelling book.';
       break;
+    }
+    default: {
+      throw new Error("Invalid role provided. Must be 'machine' or 'writer'.");
+    }
   }
 
   tokens = models[modelChoice].tokenLimit;
@@ -20,28 +27,28 @@ const askOpenRouter = async (prompt, role, modelChoice = 'mistralai/ministral-8b
   while (attempts < maxRetries) {
     try {
       const response = await fetch(process.env.API_ENDPOINT, {
-        method: 'POST',
+        body: JSON.stringify({
+          max_tokens: tokens,
+          messages: [
+            {content: roleContent, role: 'system'},
+            {content: prompt, role: 'user'},
+          ],
+          model: modelChoice,
+          temperature: temporary,
+        }),
         headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, // Use OpenRouter's API key
           'cf-aig-metadata': JSON.stringify({
             app: 'BookJen',
           }),
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`, // Use OpenRouter's API key
 
         },
-        body: JSON.stringify({
-          model: modelChoice,
-          messages: [
-            {role: 'system', content: roleContent},
-            {role: 'user', content: prompt},
-          ],
-          max_tokens: tokens,
-          temperature: temp,
-        }),
+        method: 'POST',
       });
 
       const data = await response.json();
-      const elapsed = new Date() - now;
+      const elapsed = Date.now() - now;
 
       if (response.ok) {
         return data.choices[0].message.content;
