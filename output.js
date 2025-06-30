@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 /*async function outputBook(progress, filePath) {
   const bookContent = [];
 
-  for await (const [chapterIndex, chapter] of progress.chapters.entries()) {
+  const [chapterIndex, chapter] of progress.chapters.entries()) {
     for await (const [pageIndex, page] of chapter.pages.entries()) {
       bookContent.push(page.filteredContent);
     }
